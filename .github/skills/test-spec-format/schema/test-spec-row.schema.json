@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Test spec row",
+  "description": "One row of docs/test-spec/<storyKey>-test-spec.csv. Every value is a string. Validated by scripts/validate_test_spec.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "x-columnOrder": [
+    "Test ID",
+    "Story Key",
+    "Module",
+    "Category",
+    "Test Type",
+    "Title",
+    "Preconditions",
+    "Test Data",
+    "Steps",
+    "Expected Result",
+    "Priority",
+    "Story AC",
+    "SRS Refs",
+    "LLD Refs",
+    "Automation Target",
+    "Automation Status"
+  ],
+  "required": [
+    "Test ID",
+    "Story Key",
+    "Module",
+    "Category",
+    "Test Type",
+    "Title",
+    "Preconditions",
+    "Test Data",
+    "Steps",
+    "Expected Result",
+    "Priority",
+    "Story AC",
+    "SRS Refs",
+    "LLD Refs",
+    "Automation Target",
+    "Automation Status"
+  ],
+  "properties": {
+    "Test ID": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9]*-[0-9]+-TC-[0-9]{3,}$",
+      "description": "<storyKey>-TC-001, sequential, zero-padded to 3 digits."
+    },
+    "Story Key": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9]*-[0-9]+$",
+      "description": "Jira key, for example WIPC-10."
+    },
+    "Module": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Feature area, for example Allocation, Audit, Auth."
+    },
+    "Category": {
+      "type": "string",
+      "enum": ["Positive", "Negative", "Edge", "Open Question"]
+    },
+    "Test Type": {
+      "type": "string",
+      "enum": [
+        "Unit",
+        "API",
+        "Integration",
+        "Concurrency",
+        "Security",
+        "UI",
+        "NFR"
+      ]
+    },
+    "Title": {
+      "type": "string",
+      "minLength": 8,
+      "description": "Short, starts with a verb, names the rule or scenario."
+    },
+    "Preconditions": { "type": "string", "minLength": 1 },
+    "Test Data": { "type": "string", "minLength": 1 },
+    "Steps": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Numbered actions: '1. ...' separated by a newline."
+    },
+    "Expected Result": {
+      "type": "string",
+      "minLength": 8,
+      "description": "Observable and specific: status code, rule code, message, state, audit event or UI text."
+    },
+    "Priority": { "type": "string", "enum": ["P1", "P2", "P3"] },
+    "Story AC": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Story acceptance criteria IDs, '; ' separated, for example WIPC10-AC1."
+    },
+    "SRS Refs": {
+      "type": "string",
+      "minLength": 1,
+      "description": "FR, BR, NFR, AC IDs, '; ' separated."
+    },
+    "LLD Refs": {
+      "type": "string",
+      "minLength": 1,
+      "description": "LLD-FR-xx, LLD-NFR-xx, LLD test IDs and section."
+    },
+    "Automation Target": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Suggested test file path and layer."
+    },
+    "Automation Status": {
+      "type": "string",
+      "enum": ["Not Automated", "Automated"]
+    }
+  }
+}

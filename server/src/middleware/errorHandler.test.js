@@ -1,8 +1,35 @@
 const request = require('supertest');
 const { createApp } = require('../app');
 const ValidationError = require('../errors/ValidationError');
+const { buildTestConfig } = require('../../tests/helpers/testConfig');
+
+const unauthenticated = {
+  rule: 'UNAUTHENTICATED',
+  message: 'A valid token is required.',
+  fix: 'Sign in again.',
+};
 
 const app = createApp((a) => {
+  a.get('/api/test/throw-401', () => {
+    throw new ValidationError([unauthenticated], 401);
+  });
+  a.get('/api/test/throw-429', (req, res) => {
+    res.set('Retry-After', '900');
+    throw new ValidationError(
+      [
+        {
+          rule: 'RATE_LIMITED',
+          message: 'Too many failed login attempts.',
+          fix: 'Wait 15 minutes before trying again.',
+          details: { retryAfterSeconds: 900 },
+        },
+      ],
+      429,
+    );
+  });
+  a.get('/api/test/throw-500', () => {
+    throw new Error('db down');
+  });
   a.get('/api/boom-validation', () => {
     throw new ValidationError(
       [
@@ -20,11 +47,11 @@ const app = createApp((a) => {
     throw new Error('secret internal detail');
   });
   a.post('/api/echo', (req, res) => res.json(req.body));
-});
+}, buildTestConfig());
 
 describe('error middleware (WIPC9-AC2, LLD-FR-07)', () => {
   it('returns the contract shape for an unknown route (T-03)', async () => {
-    const res = await request(app).get('/api/nope');
+    const res = await request(app).get('/nope');
 
     expect(res.status).toBe(404);
     expect(res.body.error).toBe('ValidationError');
@@ -32,7 +59,47 @@ describe('error middleware (WIPC9-AC2, LLD-FR-07)', () => {
       rule: 'NOT_FOUND',
       fix: 'Check the URL.',
     });
-    expect(res.body.failures[0].message).toContain('GET /api/nope');
+    expect(res.body.failures[0].message).toContain('GET /nope');
+  });
+
+  it(
+    'WIPC-10-TC-059 / WIPC-10-TC-199 404 outside /api, no token',
+    async () => {
+    const res = await request(app).get('/nope');
+
+    expect(res.status).toBe(404);
+    expect(res.body.failures[0].rule).toBe('NOT_FOUND');
+  });
+
+  it('WIPC-10-TC-076 returns 401 in the contract shape', async () => {
+    const res = await request(app).get('/api/test/throw-401');
+
+    expect(res.status).toBe(401);
+    expect(res.headers['content-type']).toMatch(/application\/json/);
+    expect(res.body).toEqual({
+      error: 'ValidationError',
+      failures: [unauthenticated],
+    });
+  });
+
+  it('WIPC-10-TC-077 returns 429, details, Retry-After', async () => {
+    const res = await request(app).get('/api/test/throw-429');
+
+    expect(res.status).toBe(429);
+    expect(res.headers['retry-after']).toBe('900');
+    expect(res.body.failures[0].rule).toBe('RATE_LIMITED');
+    expect(res.body.failures[0].details.retryAfterSeconds).toBe(900);
+  });
+
+  it('WIPC-10-TC-079 keeps unexpected errors as safe 500', async () => {
+    const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const res = await request(app).get('/api/test/throw-500');
+
+    expect(res.status).toBe(500);
+    expect(res.body.failures[0].rule).toBe('INTERNAL_ERROR');
+    expect(JSON.stringify(res.body)).not.toMatch(/db down|stack| at /);
+    spy.mockRestore();
   });
 
   it('maps a thrown ValidationError to the contract (T-04)', async () => {

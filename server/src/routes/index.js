@@ -1,9 +1,16 @@
 const express = require('express');
 const healthRoutes = require('./healthRoutes');
+const { createAuthRoutes } = require('./authRoutes');
+const { authenticate } = require('../middleware/authenticate');
 
-const router = express.Router();
+// Only /health and POST /auth/login are public; everything mounted
+// after authenticate is protected by default (NFR-04).
+function createRoutes(config) {
+  const router = express.Router();
+  router.use('/health', healthRoutes);
+  router.use('/auth', createAuthRoutes(config));
+  router.use(authenticate);
+  return router;
+}
 
-// Public: mounted before authenticate is added in S-02.
-router.use('/health', healthRoutes);
-
-module.exports = router;
+module.exports = { createRoutes };

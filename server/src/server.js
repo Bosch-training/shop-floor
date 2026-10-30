@@ -10,7 +10,7 @@ const { createApp } = require('./app');
 async function start() {
   const config = loadConfig();
   await connectDb(config.mongodbUri);
-  const server = createApp().listen(config.port, () => {
+  const server = createApp(null, config).listen(config.port, () => {
     console.log(`Server listening on port ${config.port}`);
   });
   const stop = async () => {

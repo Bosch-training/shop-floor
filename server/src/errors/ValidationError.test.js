@@ -12,9 +12,19 @@ describe('ValidationError (LLD-FR-08, FR-13)', () => {
     expect(err.failures).toEqual([failure]);
   });
 
-  it.each([400, 403, 404, 409, 422])('allows status %i', (status) => {
-    expect(new ValidationError([failure], status).status).toBe(status);
-  });
+  it.each([400, 401, 403, 404, 409, 422, 429])(
+    'WIPC-10-TC-075 allows status %i',
+    (status) => {
+      expect(new ValidationError([failure], status).status).toBe(status);
+    },
+  );
+
+  it.each([418, 402, 500, 0])(
+    'WIPC-10-TC-078 rejects the unsupported status %i',
+    (status) => {
+      expect(() => new ValidationError([failure], status)).toThrow(TypeError);
+    },
+  );
 
   it('rejects a disallowed status (T-07)', () => {
     expect(() => new ValidationError([failure], 500)).toThrow(TypeError);

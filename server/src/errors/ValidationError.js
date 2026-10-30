@@ -1,4 +1,4 @@
-const ALLOWED_STATUSES = [400, 403, 404, 409, 422];
+const ALLOWED_STATUSES = [400, 401, 403, 404, 409, 422, 429];
 
 // Carries the FR-13 error contract: failures[] of { rule, message, fix }.
 class ValidationError extends Error {

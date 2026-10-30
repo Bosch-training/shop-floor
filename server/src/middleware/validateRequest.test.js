@@ -1,6 +1,7 @@
 const request = require('supertest');
 const { z } = require('zod');
 const { createApp } = require('../app');
+const { buildTestConfig } = require('../../tests/helpers/testConfig');
 const { validateRequest, findOperatorKeys } = require('./validateRequest');
 
 const schemas = {
@@ -12,7 +13,7 @@ const app = createApp((a) => {
   a.post('/api/example', validateRequest(schemas), (req, res) =>
     res.json(req.validated),
   );
-});
+}, buildTestConfig());
 
 describe('findOperatorKeys (NFR-06, T-10)', () => {
   it('finds nested, array, dotted and __proto__ keys', () => {

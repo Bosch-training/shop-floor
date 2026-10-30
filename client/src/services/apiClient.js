@@ -1,4 +1,13 @@
+import { getToken } from './tokenStorage.js';
+
 const BASE_URL = '/api';
+const LOGIN_PATH = '/auth/login';
+
+let unauthorizedHandler = null;
+
+export function setUnauthorizedHandler(handler) {
+  unauthorizedHandler = handler;
+}
 
 export class ApiError extends Error {
   constructor({ status, error, failures }) {
@@ -25,9 +34,9 @@ function networkError(status = 0) {
   });
 }
 
-// Hook for the Authorization header, added in S-02.
 function authHeaders() {
-  return {};
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 export async function request(method, path, body) {
@@ -44,6 +53,10 @@ export async function request(method, path, body) {
     throw networkError();
   }
   if (!response.ok) {
+    const expired = response.status === 401 && path !== LOGIN_PATH;
+    if (expired && unauthorizedHandler) {
+      unauthorizedHandler();
+    }
     if (!Array.isArray(data?.failures) || data.failures.length === 0) {
       throw networkError(response.status);
     }

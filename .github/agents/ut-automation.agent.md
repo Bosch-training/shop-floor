@@ -9,7 +9,7 @@ tools:
   - todo
   - agent
 model:
-  - Claude Sonnet 5.5 (copilot)
+  - Claude Haiku 5.5 (copilot)
 reasoning-effort: high
 argument-hint: Jira story key with an approved test spec, for example WIPC-10
 agents:
